@@ -24,7 +24,7 @@ import subprocess
 import sys
 
 if len(sys.argv) >= 3 and sys.argv[1] == '-players' and sys.argv[2].isdigit():
-	size = (int(sys.argv[2]) * 2) + 1
+	size = int(sys.argv[2]) + 1
 	args = "python game.py"
 
 else:

@@ -16,20 +16,4 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from creatures import Dragon
-import mpi
-
-class FlameDragon(Dragon):
-	def action(self):
-		mpi.send([self.Actions.GetBreath, []], 0)
-		(result, code) = mpi.recv(0)[0]
-		print mpi.rank, "] I have", result,"breaths."
-		mpi.send([self.Actions.BreatheFire, [50]], 0)
-		(result, code) = mpi.recv(0)[0]
-		if (result == 1):
-			print mpi.rank, "] breathing fire attack succeeded!"
-		else:
-			if (code == self.ResultCodes.game_over):
-				print mpi.rank, "] breathing fire attack failed because the game was over"
-			elif (code == self.ResultCodes.not_enough_breath):
-				print mpi.rank, "] breathing fire attack failed because we were out of breath"
+__all__ = ["Dragon", "Knight"]

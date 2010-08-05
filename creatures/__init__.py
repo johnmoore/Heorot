@@ -19,7 +19,7 @@
 import creatures.Dragon
 import creatures.Knight
 
-Dragon = Dragon.DragonBase
-Knight = Knight.KnightBase
+Dragon = creatures.Dragon.DragonFields
+Knight = creatures.Knight.KnightFields
 
 __all__ = ["Dragon", "Knight"]

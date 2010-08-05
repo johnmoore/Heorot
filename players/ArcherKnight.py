@@ -20,11 +20,16 @@ from creatures import Knight
 import mpi
 
 class ArcherKnight(Knight):
-	CB = -1
-	
-	def __init__(self, ControlBase):
-		Knight.__init__(self)
-		self.CB = ControlBase
-		
 	def action(self):
-		mpi.send(["firebow", [5]], self.CB)
+		mpi.send([self.Actions.GetArrows, []], 0)
+		(result, code) = mpi.recv(0)[0]
+		print mpi.rank, "] I have", result,"arrows."
+		mpi.send([self.Actions.FireBow, [10]], 0)
+		(result, code) = mpi.recv(0)[0]
+		if (result == 1):
+			print mpi.rank, "] firing bow attack succeeded!"
+		else:
+			if (code == self.ResultCodes.game_over):
+				print mpi.rank, "] firing bow attack failed because the game was over"
+			elif (code == self.ResultCodes.not_enough_arrows):
+				print mpi.rank, "] firing bow attack failed because we were out of arrows"

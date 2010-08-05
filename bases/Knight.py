@@ -16,20 +16,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from creatures import Dragon
-import mpi
+import creature
 
-class FlameDragon(Dragon):
-	def action(self):
-		mpi.send([self.Actions.GetBreath, []], 0)
-		(result, code) = mpi.recv(0)[0]
-		print mpi.rank, "] I have", result,"breaths."
-		mpi.send([self.Actions.BreatheFire, [50]], 0)
-		(result, code) = mpi.recv(0)[0]
-		if (result == 1):
-			print mpi.rank, "] breathing fire attack succeeded!"
+class Knight(creature.Creature):
+	
+	def __init__(self):
+		creature.Creature.__init__(self)
+		self.power = 20
+		
+	#Overrides
+	def Attack(self, power, replyto):
+		print replyto, "] attempting to shoot a bow with",power,"arrows!"
+		if (self.power >= power):
+			self.power -= power
+			self.AddPayload(2, replyto)
+			return (1, self.ResultCodes.success)
 		else:
-			if (code == self.ResultCodes.game_over):
-				print mpi.rank, "] breathing fire attack failed because the game was over"
-			elif (code == self.ResultCodes.not_enough_breath):
-				print mpi.rank, "] breathing fire attack failed because we were out of breath"
+			self.AddPayload(2, replyto)
+			return (0, self.ResultCodes.not_enough_power)

@@ -16,40 +16,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import time
-import inspect
-import mpi
-import sys
+import creature
 
-class DragonBase(object):
-	fire = 0
-	__mCB = -1
+class EnumResultCodes(object):
+	success = 1
 	
-	def __init__(self, mCB=-1):
-		self.fire = 100
-		if (mCB >= 0):
-			self.__mCB = mCB
-		
-	def __flamethrow(self, firepower):
-		print "attacking with a flamethrow of", firepower, "firepower!"
-		if(self.fire >= firepower):
-			self.fire -= firepower
-			print("success")
-		else:
-			print("not enough fire!")
-		time.sleep(2)
-		
-	def IsInGame(self):
-		mpi.send("check_in_game", 0)
-		retval = mpi.recv(0)[0]['in_game']
-		return retval
-		
-	def HandleRequests(self):
-		if (self.IsInGame() == 0):
-			mpi.send("exiting", 0)
-			sys.exit()
-		packet = mpi.recv(self.__mCB)[0]
-		(func, args) = packet
-		if (func == "flamethrow"):
-			self.__flamethrow(args[0])
-		
+	#errors
+	game_over = 0
+	not_enough_breath = 2
+
+class EnumActionNames(object):
+	GetBreath = creature.CreatureMove("GetPower")
+	BreatheFire = creature.CreatureMove("Attack")
+	
+class DragonFields(object):
+	ResultCodes = EnumResultCodes()
+	Actions = EnumActionNames()
