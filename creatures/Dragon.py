@@ -21,13 +21,26 @@ class EnumResultCodes(object):
 	success = 1
 	
 	#errors
+	slain = -1
 	game_over = 0
 	not_enough_breath = 2
+	invalid_flying_direction = 3
+	invalid_command = 4
+	invalid_flight_path = 5
+	collision = 6
+	invalid_arguments = 7
+	invalid_breathing_direction = 8
 
 class EnumActionNames(object):
 	GetBreath = creature.CreatureMove("GetPower")
 	BreatheFire = creature.CreatureMove("Attack")
-	
+	SetFlyingDirection = creature.CreatureMove("SetFacing")
+	GetFlyingDirection = creature.CreatureMove("GetFacing")
+	GetFlyingPosition = creature.CreatureMove("GetPosition")
+	Fly = creature.CreatureMove("Move")
+
 class DragonFields(object):
 	ResultCodes = EnumResultCodes()
 	Actions = EnumActionNames()
+	Direction = creature.Direction
+	Position = creature.CreaturePos

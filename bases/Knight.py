@@ -19,17 +19,35 @@ import creature
 
 class Knight(creature.Creature):
 	
-	def __init__(self):
-		creature.Creature.__init__(self)
+	def __init__(self, proc):
+		creature.Creature.__init__(self, proc)
 		self.power = 20
-		
+		while not (self.Facing == creature.Direction.North or self.Facing == creature.Direction.East or self.Facing == creature.Direction.South or self.Facing == creature.Direction.West):
+			self.Facing = creature.Direction.randomDir()
+
 	#Overrides
-	def Attack(self, power, replyto):
-		print replyto, "] attempting to shoot a bow with",power,"arrows!"
+	def Attack(self, power, direction):
+		print self.proc, "] attempting to shoot a bow with",power,"arrows", "to the", creature.Direction.ToString(direction)
 		if (self.power >= power):
 			self.power -= power
-			self.AddPayload(2, replyto)
+			self.AddPayload(2)
 			return (1, self.ResultCodes.success)
 		else:
-			self.AddPayload(2, replyto)
+			self.AddPayload(2)
 			return (0, self.ResultCodes.not_enough_power)
+	
+	def SetFacing(self, facing):
+		print self.proc, "] setting horse's facing to", creature.Direction.ToString(facing)
+		if (facing == creature.Direction.North or facing == creature.Direction.East or facing == creature.Direction.South or facing == creature.Direction.West):
+			self.Facing = facing
+			self.AddPayload(1)
+			return (1, self.ResultCodes.success)
+		else:
+			self.AddPayload(1)
+			return (0, self.ResultCodes.invalid_facing)
+	
+	def Move(self, spaces):
+		if (spaces > 2 or spaces< 1):
+			self.AddPayload(2)
+			return (0, self.ResultCodes.invalid_move)
+		return creature.Creature.Move(self, spaces) #call base class now

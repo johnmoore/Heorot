@@ -21,13 +21,26 @@ class EnumResultCodes(object):
 	success = 1
 	
 	#errors
+	defeated = -1
 	game_over = 0
 	not_enough_arrows = 2
-
+	invalid_horse_facing = 3
+	invalid_command = 4
+	invalid_horse_path = 5
+	collision = 6
+	invalid_arguments = 7
+	invalid_bow_direction = 8
+	
 class EnumActionNames(object):
 	GetArrows = creature.CreatureMove("GetPower")
 	FireBow = creature.CreatureMove("Attack")
+	FaceHorse = creature.CreatureMove("SetFacing")
+	GetHorseFacing = creature.CreatureMove("GetFacing")
+	GetHorsePosition = creature.CreatureMove("GetPosition")
+	RideHorse = creature.CreatureMove("Move")
 	
 class KnightFields(object):
 	ResultCodes = EnumResultCodes()
 	Actions = EnumActionNames()
+	Direction = creature.Direction
+	Position = creature.CreaturePos

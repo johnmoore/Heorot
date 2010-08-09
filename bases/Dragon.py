@@ -19,19 +19,31 @@ import creature
 
 class Dragon(creature.Creature):
 	
-	def __init__(self):
-		creature.Creature.__init__(self)
+	def __init__(self, proc):
+		creature.Creature.__init__(self, proc)
 		self.power = 100
-		
+
 	#Overrides
-	def Attack(self, power, replyto):
-		print replyto, "] attempting to breath", power, "breaths of fire!"
+	def Attack(self, power, direction):
+		if not (creature.Direction.Equals(direction, self.Facing)): #dragons must breathe forward
+			return (0, self.ResultCodes.invalid_attack_direction)
+		print self.proc, "] attempting to breathe",power,"breaths of fire", "to the", creature.Direction.ToString(self.Facing)
 		if (self.power >= power):
 			self.power -= power
-			self.AddPayload(3, replyto)
+			self.AddPayload(3)
 			return (1, self.ResultCodes.success)
 		else:
-			self.AddPayload(3, replyto)
+			self.AddPayload(3)
 			return (0, self.ResultCodes.not_enough_power)
-			
 	
+	def SetFacing(self, facing):
+		print self.proc, "] setting flying direction to", creature.Direction.ToString(facing)
+		self.Facing = facing
+		self.AddPayload(2)
+		return (1, self.ResultCodes.success)
+	
+	def Move(self, spaces):
+		if not (spaces == 1):
+			self.AddPayload(2)
+			return (0, self.ResultCodes.invalid_move)
+		return creature.Creature.Move(self, spaces) #call base class now

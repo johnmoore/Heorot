@@ -19,6 +19,7 @@ import mpi
 import sys
 import inspect
 import time
+import random
 from bases import *
 
 #for debug purposes (until we read a file)
@@ -32,13 +33,13 @@ class InvalidPlayerClass(Exception):
 		return repr(self.value)
 
 #pseudoconstants
-BOARD_DIMENSION_WIDTH = 3
-BOARD_DIMENSION_HEIGHT = 8
-GAME_LENGTH = 8
+BOARD_DIMENSION_WIDTH = 5
+BOARD_DIMENSION_HEIGHT = 5
+GAME_LENGTH = 10
 
 #functions
 def init_board(x, y):
-	return [[0 for col in range(x)] for row in range(y)]
+	return [["" for col in range(x)] for row in range(y)]
 	
 def instantiate_player(player_module):
 	try:
@@ -54,12 +55,25 @@ def instantiate_player(player_module):
 		except ImportError as e:
 			raise InvalidPlayerClass("Player module could not be loaded (ImportError): " + player_module)
 
-def instantiate_master(master_class):
+def instantiate_master(master_class, proc):
 	paths = master_class.split('.')
 	modulename = '.'.join(paths[:-1])
 	classname = paths[-1]
 	__import__(modulename)
-	return getattr(sys.modules[modulename], classname)()
+	return getattr(sys.modules[modulename], classname)(proc)
+	
+def PutPlayerInBoard(board, player):
+	possible = []
+	for y in range(0, len(board)):
+		for x in range(0, len(board[y])):
+			if (board[y][x] == ""):
+				possible.append((x, y))
+	if (len(possible) == 0):
+		return 0
+	(x, y) = random.choice(possible)
+	player.SetPosition(x, y)
+	board[y][x] = player
+	return board
 
 #main code
 if (mpi.rank == 0):
@@ -67,13 +81,18 @@ if (mpi.rank == 0):
 	players = range(0, mpi.size) #here we store the master classes; 0 is a placeholder
 	board = init_board(BOARD_DIMENSION_WIDTH, BOARD_DIMENSION_HEIGHT)
 
-	#first we need to set up our players
+	#first we need to set up our players and board
 	for player in range(1, mpi.size):
-		players[player] = instantiate_master(mpi.recv(player)[0])
-	
+		players[player] = instantiate_master(mpi.recv(player)[0], player)
+		board = PutPlayerInBoard(board, players[player])
+		if (board == 0):
+			raise StandardError("No room for player " + player.__str__())
+
 	mpi.barrier()
+	
 	#now we run the game
 	starttime = time.time()
+	exited = 0
 	
 	while(time.time() <= starttime + GAME_LENGTH):
 		#Update our queues
@@ -82,19 +101,25 @@ if (mpi.rank == 0):
 			(data, status) = packet #data[0] is the command string, data[1] is a list of args
 			if (data == "check_in_game"):
 				mpi.send(1, status.source)
+			elif (data == "exiting"):
+				exited += 1
 			else:
 				player = players[status.source]
 				command = data[0]
 				args = data[1]
-				player.QueueAction(command, args, status.source) #forward our command to the master
+				player.SetBoard(board)
+				player.QueueAction(command, args) #forward our command to the master
+				board = player.GetBoard()
 		#Process our queues
 		for player in range(1, mpi.size):
+			players[player].SetBoard(board)
 			players[player].ProcessQueue()
+			board = players[player].GetBoard()
 	print "Game completed. Anything following will not be taken into consideration."
 	#wait for our player procs to end, but first flush the queue (returns false results for attacks, blank boards)
 	for player in range(1, mpi.size):
 			players[player].FlushQueue()
-	exited = 0
+
 	while (exited < mpi.size - 1):
 		packet = mpi.recv(mpi.ANY_SOURCE)
 		(data, status) = packet
@@ -124,5 +149,9 @@ else:
 			mpi.send("exiting", 0)
 			sys.exit(0)
 		else:
-			player.action()
-
+			try:
+				player.action()
+			except Exception as e:
+				print "Game over or fatal exception occurred for player", mpi.rank
+				mpi.send("exiting", 0)
+				sys.exit(0)
